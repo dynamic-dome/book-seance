@@ -16,7 +16,7 @@ Built on top of the Book RAG project with a coding agent: the engine follows the
 
 ## Setup
 
-You need [uv](https://docs.astral.sh/uv/) and a free key from [console.groq.com/keys](https://console.groq.com/keys).
+You need [uv](https://docs.astral.sh/uv/) and a free key from [console.groq.com/keys](https://console.groq.com/keys), or a logged-in Claude Code or Codex CLI (see below).
 
 ```bash
 uv sync
@@ -40,12 +40,25 @@ The small version, with the same engine in Streamlit:
 uv run streamlit run app_streamlit.py
 ```
 
+## Choose who writes the answers
+
+Set `SEANCE_LLM` in `.env` and restart the server. The search stays local and identical in every case.
+
+| `SEANCE_LLM` | Needs | Speed per answer | Note |
+|---|---|---|---|
+| `groq` (default) | a Groq key | 1 to 2 seconds | `gpt-oss-20b`, the course model; the free plan allows about six answers per minute |
+| `claude` | a logged-in Claude Code | 5 to 15 seconds | uses your Claude subscription, `SEANCE_CLAUDE_MODEL` picks the model (default `haiku`) |
+| `codex` | a logged-in Codex CLI | 13 to 19 seconds | uses your ChatGPT subscription |
+
+`claude` and `codex` are for your own machine. Subscriptions are personal, so if other people use this, each of them runs it with their own account or key.
+
 ## How it is built
 
 | File | What it holds |
 |---|---|
 | `seance/core.py` | The engine: clean, find chapters, chunk, embed, retrieve, answer, check citations, read the mood |
 | `seance/books.py` | The shelf as plain data: books, voices, quotes, themes |
+| `seance/backends.py` | Who writes the answer: Groq or a subscription tool |
 | `server.py`, `static/index.html` | FastAPI and the séance room |
 | `app_streamlit.py` | The Streamlit version |
 | `tests/` | Checks against the real books: chapters, verbatim quotes, true positions |
@@ -65,5 +78,5 @@ Run it locally only. A public version would spend your Groq limit on strangers.
 ## Credits
 
 - Books: [Project Gutenberg](https://www.gutenberg.org/), public domain in the United States, files unchanged, see `data/README.md`.
-- Models: `openai/gpt-oss-20b` on Groq, `sentence-transformers/all-MiniLM-L6-v2`.
+- Models: `openai/gpt-oss-20b` on Groq by default, `sentence-transformers/all-MiniLM-L6-v2` for the search.
 - Fonts: open fonts from Google Fonts under the SIL Open Font License, stored in `static/fonts/`.

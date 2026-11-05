@@ -13,10 +13,10 @@ from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from seance import backends
 from seance.books import BOOKS, NARRATOR
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -32,7 +32,6 @@ CHUNK_OVERLAP = 120
 TOP_K = 6
 CONTEXT_CHARS = 700
 HISTORY_MESSAGES = 4
-MODEL = "openai/gpt-oss-20b"
 
 # Anchor sentences for the mood of a passage. Comparing a passage with these reuses the
 # embedding model, so the room can react to the text without any extra call to the LLM.
@@ -248,7 +247,7 @@ def system_prompt(spec, voice, other=None):
         "2. If the passages touch the topic at all, answer from what they say, even if they cover only part of the question.",
         f"   Only if they have nothing to do with the question, reply with exactly: {voice['refusal']}",
         "3. Cite the passage behind every claim, for example [2].",
-        "4. Use at most three sentences.",
+        "4. Use at most three sentences, and always answer in English.",
         "5. A passage may be told by, or about, someone else. You may speak of it as something you saw or heard, but do not claim another person's words or feelings as your own.",
     ]
     if voice["id"] != "book":
@@ -258,16 +257,10 @@ def system_prompt(spec, voice, other=None):
     return "\n".join(lines)
 
 
-def llm():
-    # low reasoning: measured 163 instead of 531 to 800 output tokens for the same question,
-    # which matters with a free plan of about 8,000 tokens per minute
-    return ChatGroq(model=MODEL, temperature=0, max_tokens=1000, max_retries=5, reasoning_effort="low")
-
-
 def generate(messages):
     """The model returned an empty text once in ten calls during testing, so ask a second time."""
     for _ in range(2):
-        reply = llm().invoke(messages)
+        reply = backends.ask(messages)
         if reply.content.strip():
             return reply
     return reply

@@ -4,7 +4,6 @@ Run from the project folder:
 
     uv run uvicorn server:app --host 127.0.0.1 --port 8642
 """
-import os
 import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -14,6 +13,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from seance import backends
 from seance.books import BOOKS, NARRATOR
 from seance.core import Library, answer, find_voice
 
@@ -60,8 +60,9 @@ def check_book(slug):
 
 def run(call):
     """Turn the two failures a visitor can meet into messages they can act on."""
-    if not os.environ.get("GROQ_API_KEY"):
-        raise HTTPException(503, "No GROQ_API_KEY found. Put your key into the .env file and restart the server.")
+    problem = backends.ready()
+    if problem:
+        raise HTTPException(503, problem)
     try:
         return call()
     except KeyError:
