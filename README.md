@@ -21,7 +21,7 @@ You need [uv](https://docs.astral.sh/uv/) and one way to write the answers: a fr
 ### 1. Get the code
 
 ```bash
-git clone git@github.com:dynamic-dome/book-seance.git
+git clone https://github.com/dynamic-dome/book-seance.git
 cd book-seance
 uv sync
 ```
