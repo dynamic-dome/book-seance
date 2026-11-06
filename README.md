@@ -107,4 +107,8 @@ Run it locally only. A public version would spend your Groq limit on strangers.
 
 - Books: [Project Gutenberg](https://www.gutenberg.org/), public domain in the United States, files unchanged, see `data/README.md`.
 - Models: `openai/gpt-oss-20b` on Groq by default, `sentence-transformers/all-MiniLM-L6-v2` for the search.
-- Fonts: open fonts from Google Fonts under the SIL Open Font License, stored in `static/fonts/`.
+- Fonts: from Google Fonts, stored in `static/fonts/`. Eleven are under the SIL Open Font License, Special Elite is under the Apache License 2.0. The licence text of each font is in `static/fonts/licenses/`.
+
+## License
+
+The code is under the [MIT License](LICENSE). This does not cover the books in `data/` or the fonts in `static/fonts/`: see Credits.
