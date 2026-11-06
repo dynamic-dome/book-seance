@@ -1,0 +1,2 @@
+# cmd.exe can lose its labels in a file with LF line endings
+*.cmd text eol=crlf

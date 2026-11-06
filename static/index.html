@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Book Séance</title>
-<link rel="icon" href="data:,">
+<link rel="icon" href="/static/seance.ico">
 <link rel="stylesheet" href="/static/fonts/fonts.css">
 <style>
 :root{
@@ -25,6 +25,8 @@ button{cursor:pointer}
 .view{position:relative;z-index:2;height:100%}
 [hidden]{display:none!important}
 
+.llm{color:var(--muted);font-size:15px;text-decoration:none;border-bottom:1px dotted currentColor}
+.llm:hover{color:var(--accent)}
 /* the shelf */
 #shelf{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px;padding:28px;overflow:auto}
 .brand{text-align:center}
@@ -132,6 +134,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
   <div class="rack" id="rack"></div>
   <div class="hint">Choose a book. Its people answer only from what is written, and every answer shows the passage it stands on.</div>
+  <a class="llm" href="/" hidden></a>
 </main>
 
 <main id="room" class="view" hidden>
@@ -140,6 +143,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <button class="back" id="back">← Back to the shelf</button>
       <h2 id="bookTitle"></h2>
       <div id="bookMeta"></div>
+      <a class="llm" href="/" hidden></a>
     </div>
     <div>
       <div class="label">Summon a voice</div>
@@ -453,6 +457,13 @@ addEventListener('hashchange',()=>{
   if(S.book?.slug!==slug||$('room').hidden) openBook(slug,v);
   else if(v&&S.voice?.id!==v) summon(v);
 });
+
+// Shows who writes the answers; the link leads back to the start page to change it
+fetch('/api/backends').then(r=>r.ok?r.json():null).then(j=>{
+  const c=j?.choices.find(x=>x.id===j.current);
+  if(!c) return;
+  document.querySelectorAll('.llm').forEach(a=>{a.textContent=`Answers by ${c.name} · change`;a.hidden=false;});
+}).catch(()=>{});
 
 (async()=>{
   const j=await (await fetch('/api/books')).json();

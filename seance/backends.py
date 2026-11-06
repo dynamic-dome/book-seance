@@ -29,14 +29,34 @@ def backend():
     return os.environ.get("SEANCE_LLM", "groq").strip().lower()
 
 
-def ready():
-    """Returns a message a person can act on if the chosen backend cannot run, else None."""
-    name = backend()
+def ready(name=None):
+    """Returns a message a person can act on if a backend cannot run, else None."""
+    name = name or backend()
     if name == "groq":
         return None if os.environ.get("GROQ_API_KEY") else "No GROQ_API_KEY found. Put your key into the .env file and restart the server."
     if name in ("claude", "codex"):
         return None if shutil.which(name) else f"The {name} command was not found on this machine."
     return f"Unknown SEANCE_LLM value: {name}. Use groq, claude or codex."
+
+
+def choices():
+    """What the start page offers. A choice that cannot run carries the reason."""
+    claude_model = os.environ.get("SEANCE_CLAUDE_MODEL", "haiku").capitalize()
+    codex_model = os.environ.get("SEANCE_CODEX_MODEL") or "Default model"
+    offers = [
+        ("claude", "Claude", f"{claude_model}, through your Claude subscription", "5 to 15 seconds per answer"),
+        ("codex", "GPT", f"{codex_model}, through Codex and your ChatGPT subscription", "13 to 25 seconds per answer"),
+        ("groq", "Groq", f"{GROQ_MODEL.split('/')[-1]}, the course model on the free plan", "1 to 2 seconds per answer"),
+    ]
+    return [{"id": i, "name": n, "model": m, "speed": s, "problem": ready(i)} for i, n, m, s in offers]
+
+
+def choose(name):
+    """Switch while the server runs: every answer reads the setting again through backend()."""
+    problem = ready(name)
+    if problem:
+        raise ValueError(problem)
+    os.environ["SEANCE_LLM"] = name
 
 
 def split(messages):

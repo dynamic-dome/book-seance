@@ -46,6 +46,10 @@ class Ask(BaseModel):
     history: list[Turn] = []
 
 
+class Choice(BaseModel):
+    backend: str
+
+
 class Round(BaseModel):
     book: str
     voices: list[str] = Field(min_length=2, max_length=2)
@@ -74,8 +78,28 @@ def run(call):
 
 
 @app.get("/")
-def index():
+def start():
+    """The start page: choose who writes the answers, then enter the room."""
+    return FileResponse(STATIC / "start.html")
+
+
+@app.get("/room")
+def room():
     return FileResponse(STATIC / "index.html")
+
+
+@app.get("/api/backends")
+def list_backends():
+    return {"current": backends.backend(), "choices": backends.choices()}
+
+
+@app.post("/api/backend")
+def choose_backend(req: Choice):
+    try:
+        backends.choose(req.backend)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    return {"current": backends.backend()}
 
 
 @app.get("/api/books")

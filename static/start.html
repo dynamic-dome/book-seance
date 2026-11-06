@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book Séance</title>
+<link rel="icon" href="/static/seance.ico">
+<link rel="stylesheet" href="/static/fonts/fonts.css">
+<style>
+:root{--bg:#0b0809;--panel:#15100e;--panel2:#1f1814;--ink:#e8dccb;--muted:#9c9088;--accent:#c9a24b;--accent2:#e9b067;--rule:#3a2c1f}
+*{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{background:radial-gradient(ellipse at 50% 42%,#241811 0,var(--bg) 62%);color:var(--ink);font:19px/1.5 'EB Garamond',Georgia,serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px;min-height:100vh;padding:32px 24px}
+.brand{text-align:center}
+.brand h1{font:700 clamp(38px,6vw,68px)/1.05 'Cinzel',serif;letter-spacing:.14em;margin:0;color:var(--accent)}
+.brand p{margin:14px 0 0;color:var(--muted);font-style:italic;font-size:23px}
+.seats{display:grid;grid-template-columns:repeat(3,minmax(0,300px));gap:22px;width:100%;justify-content:center}
+.seat{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:26px 22px 22px;background:var(--panel);border:1px solid var(--rule);border-radius:6px;color:inherit;font:inherit;cursor:pointer;transition:transform .25s cubic-bezier(.2,.8,.3,1.2),border-color .25s,background-color .25s}
+.seat:hover:not(:disabled){transform:translateY(-8px)}
+.seat:hover:not(:disabled),.seat:focus-visible{border-color:var(--accent);background:var(--panel2)}
+.seat:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.seat:disabled{cursor:not-allowed;opacity:.55}
+.flame{width:18px;height:30px;margin-bottom:10px;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;background:radial-gradient(ellipse at 50% 72%,#fff3c4 0,var(--accent2) 42%,#c2571f 100%);box-shadow:0 0 22px 6px rgba(233,176,103,.35);animation:flicker 2.6s ease-in-out infinite}
+.seat:disabled .flame{background:#3a2c1f;box-shadow:none;animation:none}
+.seat:nth-child(2) .flame{animation-delay:-.9s}
+.seat:nth-child(3) .flame{animation-delay:-1.7s}
+@keyframes flicker{0%,100%{transform:scale(1) rotate(-1.5deg)}50%{transform:scale(1.06,.95) rotate(1.5deg)}}
+.seat h2{font:700 30px/1.1 'Cinzel',serif;letter-spacing:.08em;margin:0;color:var(--accent)}
+.model{font-size:19px;line-height:1.3;min-height:50px}
+.speed{color:var(--muted);font-size:17px;font-style:italic}
+.last{font:12.5px/1 'JetBrains Mono',Consolas,monospace;color:var(--accent2);margin-top:8px;min-height:13px}
+.problem{color:#e08a6d;font-size:16px;line-height:1.3;margin-top:8px}
+.foot{color:var(--muted);font-size:18px;text-align:center;max-width:720px;margin:0}
+#error{color:#e08a6d;text-align:center;min-height:28px;margin:-20px 0 0}
+@media (max-width:820px){.seats{grid-template-columns:minmax(0,420px)}.model{min-height:0}}
+@media (prefers-reduced-motion:reduce){.flame{animation:none}.seat{transition:none}}
+</style>
+</head>
+<body>
+<header class="brand">
+  <h1>BOOK SÉANCE</h1>
+  <p>Who writes the answers tonight?</p>
+</header>
+<main class="seats" id="seats" aria-label="Choose a language model"></main>
+<p id="error" role="alert"></p>
+<p class="foot">The search through the books stays on this machine and is the same for all three. You choose who puts the passages into words.</p>
+
+<script>
+const seats=document.getElementById('seats'), error=document.getElementById('error');
+
+function seat(choice, current){
+  const b=document.createElement('button');
+  b.className='seat';
+  b.dataset.id=choice.id;
+  b.disabled=Boolean(choice.problem);
+  const parts=[['div','flame',''],['h2','',choice.name],['div','model',choice.model],['div','speed',choice.speed]];
+  if(choice.problem) parts.push(['div','problem',choice.problem]);
+  else parts.push(['div','last',choice.id===current?'LAST USED':'']);
+  for(const [tag,cls,text] of parts){
+    const el=document.createElement(tag);
+    if(cls) el.className=cls;
+    el.textContent=text;
+    b.append(el);
+  }
+  b.addEventListener('click',()=>choose(choice.id));
+  return b;
+}
+
+async function choose(id){
+  error.textContent='';
+  try{
+    const r=await fetch('/api/backend',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({backend:id})});
+    if(!r.ok){ error.textContent=(await r.json()).detail||'That choice did not work.'; return; }
+    location.href='/room';
+  }catch{ error.textContent='The server does not answer. Start it again.'; }
+}
+
+(async()=>{
+  try{
+    const j=await (await fetch('/api/backends')).json();
+    seats.append(...j.choices.map(c=>seat(c,j.current)));
+    // Enter takes the last choice again
+    (seats.querySelector(`[data-id="${j.current}"]:not(:disabled)`)||seats.querySelector('button:not(:disabled)'))?.focus();
+  }catch{ error.textContent='The server does not answer. Start it again.'; }
+})();
+</script>
+</body>
+</html>
